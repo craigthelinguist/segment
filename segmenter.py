@@ -113,11 +113,3 @@ class Segmenter(object):
             rseg = self._slice(right, words, len(right)-1)
 
             return "-".join([lseg,mseg,rseg]).lstrip("-").rstrip("-")
-
-def main():
-    import loader
-    seg = Segmenter("frequencies.txt", None)
-    print(seg.segment("timemanchild"))
-
-if __name__ == "__main__":
-    main()
