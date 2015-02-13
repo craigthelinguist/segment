@@ -12,10 +12,11 @@ import codecs
 # Constants.
 # --------------------------------------------------------------------------------
 
-_GRAMMAR = ["the", "and"]
-_VALID_CHARS = ["a","b","c","d","e","f","g","h","i","j","k","l","m","n"
+__GRAMMAR = ["the", "and"]
+__VALID_CHARS = ["a","b","c","d","e","f","g","h","i","j","k","l","m","n",
                 "o","p","q","r","s","t","u","v","w","x","y","z","-"]
-_ENCODING = "latin-1"
+__ENCODING = "latin-1"
+MIN_DEGREE = 4
 
 
 # --------------------------------------------------------------------------------
@@ -24,10 +25,10 @@ _ENCODING = "latin-1"
 
 def _valid(*words):
     for word in words:
-        if len(word) < 3 or word in _GRAMMAR:
+        if len(word) < 3 or word in __GRAMMAR:
             return False
         for char in word:
-            if char not in _VALID_CHARS:
+            if char not in __VALID_CHARS:
                 return False
     return True
 
@@ -44,7 +45,7 @@ def load_frequencies(fname):
     # get frequency counts
     words = {}
     count = 0
-    with codecs.open(fname, "r", _ENCODING) as f:
+    with codecs.open(fname, "r", __ENCODING) as f:
         for line in f:
 
             # parse line
@@ -89,7 +90,7 @@ def load_3grams(fname):
             grams[s1][s2][s3] += 1
 
     count = 0
-    with codecs.open(fname, "r", _ENCODING) as f:
+    with codecs.open(fname, "r", __ENCODING) as f:
         for line in f:
 
             # parse line

@@ -8,20 +8,27 @@ import loader as _loader
 
 
 # --------------------------------------------------------------------------------
+# Globals.
+# --------------------------------------------------------------------------------
+
+
+
+# --------------------------------------------------------------------------------
 # Clases.
 # --------------------------------------------------------------------------------
 
 class Segmenter(object):
 
-    _frequencies = None
-    _3grams = None
+    __frequencies = None
+    __3grams = None
+    __MIN_DEGREE = _loader.MIN_DEGREE
 
     def __init__(self, fpath_frequencies, fpath_3grams=None):
-        self._frequencies = _loader.load_frequencies(fpath_frequencies)
+        self.__frequencies = _loader.load_frequencies(fpath_frequencies)
         if fpath_3grams:
-            self._3grams = _loader.load_3grams(fpath_3grams)
+            self.__3grams = _loader.load_3grams(fpath_3grams)
         else:
-            self._3grams = dict(dict(dict()))
+            self.__3grams = dict(dict(dict()))
 
     def prob(self, words):
         """
@@ -39,7 +46,7 @@ class Segmenter(object):
             word1 = words[0]
             word2 = words[1]
             word3 = words[2]
-            _3grams = self._3grams
+            _3grams = self.__3grams
             if word1 in _3grams:
                 if word2 in _3grams[word1]:
                     if word3 in _3grams[word1][word2]:
@@ -49,24 +56,24 @@ class Segmenter(object):
             raise ValueError("Can only get probability of 1-grams or 3-grams.")
 
     def _pr(self, s):
-        if s not in self._frequencies:
+        if s not in self.__frequencies:
             return 0.0
         else:
-            return self._frequencies[s]
+            return self.__frequencies[s]
 
     def _pr3gram(self, s1, s2, s3):
         """
         Get the probability that three strings appear one after another.
         :rtype : float
         """
-        if not s1 in self._3grams:
+        if not s1 in self.__3grams:
             return 0.0
-        elif not s2 in self._3grams[s1]:
+        elif not s2 in self.__3grams[s1]:
             return 0.0
-        elif not s3 in self._3grams[s1][s2]:
+        elif not s3 in self.__3grams[s1][s2]:
             return 0.0
         else:
-            return self._3grams[s1][s2][s3]
+            return self.__3grams[s1][s2][s3]
 
     def segment(self, string):
         """
@@ -74,12 +81,12 @@ class Segmenter(object):
         Return the string with its components delimited by '-'
         :rtype : str
         """
-        return self._slice(string, self._frequencies, len(string)-1)
+        return self._slice(string, self.__frequencies, len(string)-1)
 
     def _slice(self, string, words, degree):
 
         # base case.
-        if degree < 3:
+        if degree < self.__MIN_DEGREE:
          return string
 
         # keep track of the most probable substring in this word. the first character

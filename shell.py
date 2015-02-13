@@ -12,8 +12,8 @@ from segmenter import Segmenter
 # Globals.
 # --------------------------------------------------------------------------------
 
-_seg = None
-_INTRO = '''Nau mai, haere mai ki te Segmenter testing shell.
+__seg = None
+__INTRO = '''Nau mai, haere mai ki te Segmenter testing shell.
 Type a word and its English segmentation will be displayed.
 Type help() to show all commands.'''
 
@@ -57,8 +57,8 @@ def eval(user_input):
         print("prob(a,b,c)\n\tGet probability of a,b,c appearing in that order.")
         print()
     elif user_input == "intro()":
-        global _INTRO
-        print(_INTRO)
+        global __INTRO
+        print(__INTRO)
     elif user_input.startswith("prob(") and user_input.endswith(")"):
         user_input = user_input.lstrip("prob(").rstrip(")")
         args = user_input
@@ -66,14 +66,14 @@ def eval(user_input):
         for i in range(len(args)):
             args[i] = args[i].lstrip().rstrip()
             args[i] = args[i].lstrip('"').rstrip('"').lstrip("'").rstrip("'")
-        global _seg
-        prob = _seg.prob(args)
+        global __seg
+        prob = __seg.prob(args)
         print(prob)
     elif user_input.endswith(")"):
         print("Unrecognised command.")
     else:
-        global _seg
-        print(_seg.segment(user_input))
+        global __seg
+        print(__seg.segment(user_input))
 
 
 # --------------------------------------------------------------------------------
@@ -89,31 +89,30 @@ def main():
 
     # defaults
     fpath_frequencies = "frequencies.txt"
-    fpath_ngrams = None
-    # fpath_ngrams = "3grams.txt"
+    fpath_grams = None
 
     # parse arguments
     args = sys.argv[1:]
     for arg in args:
-
         if arg == "-simple":
             fpath_ngrams = None
 
     # validate filepaths
-    for fpath in [fpath_frequencies, fpath_ngrams]:
-        if fpath and not os.path.isfile(fpath):
-            print("Error: could not find " + fpath)
-            sys.exit(1)
+    if not os.path.isfile(fpath_frequencies):
+        abort("Could not find frequencies.txt")
+    if not fpath_grams or not os.path.isfile(fpath_grams):
+        print("Could not find 3grams.txt, loading without 3grams.")
 
     # initialise segmenter
     print("Loading Segmenter.")
-    global _seg
-    _seg = Segmenter(fpath_frequencies, fpath_ngrams)
+    global __seg
+    __seg = Segmenter(fpath_frequencies, fpath_grams)
 
     # show intro msg
     clear()
-    global _INTRO
-    print(_INTRO)
+    global __INTRO
+    print(__INTRO)
+    print("hello, world!")
 
     # read, eval
     while (True):
