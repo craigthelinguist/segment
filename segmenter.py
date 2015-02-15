@@ -4,6 +4,8 @@
 # Imports.
 # --------------------------------------------------------------------------------
 
+import os
+import sys
 import loader as _loader
 
 
@@ -120,3 +122,35 @@ class Segmenter(object):
             rseg = self._slice(right, words, len(right)-1)
 
             return "-".join([lseg,mseg,rseg]).lstrip("-").rstrip("-")
+
+# --------------------------------------------------------------------------------
+# Main.
+# --------------------------------------------------------------------------------
+def main():
+
+    if len(sys.argv) == 1:
+        print("Error: no arguments supplied.")
+        print("Usage: segmenter.py arg1 arg2 ... ")
+        print("Where arg1, arg2, ... are the strings you want to segment.")
+        sys.exit(0)
+
+    if not os.path.isfile("1grams.txt"):
+        print("Error: could not find 1grams.txt.")
+        print("Exiting....")
+        sys.exit(1)
+    ngrams1 = "1grams.txt"
+
+    ngrams3 = "3grams.txt"
+    if not os.path.isfile(ngrams3):
+        print("Could not find 3grams.txt.")
+        print("Segmenter will run without use of 3grams.")
+        ngrams3 = None
+
+    seg = Segmenter(ngrams1, ngrams3)
+
+    for word in sys.argv[1:]:
+        print(word + "     ---->     ", end="")
+        segmentation = seg.segment(word)
+        print(segmentation)
+
+if __name__ == "__main__": main()
