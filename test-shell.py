@@ -67,7 +67,7 @@ def eval(user_input):
             args[i] = args[i].lstrip().rstrip()
             args[i] = args[i].lstrip('"').rstrip('"').lstrip("'").rstrip("'")
         global __seg
-        prob = __seg.prob(args)
+        prob = __seg.prob(*args)
         print(prob)
     elif user_input.endswith(")"):
         print("Unrecognised command.")
@@ -87,26 +87,34 @@ def abort(errmsg):
 
 def main():
 
-    # defaults
-    fpath_frequencies = "1grams.txt"
-    fpath_grams = None
+    # default fpaths
+    ngrams1 = "1grams.txt"
+    ngrams2 = "2grams.txt"
+    ngrams3 = "3grams.txt"
 
     # parse arguments
     args = sys.argv[1:]
     for arg in args:
         if arg == "-simple":
-            fpath_ngrams = None
+            ngrams2 = None
+            ngrams3 = None
 
-    # validate filepaths
-    if not os.path.isfile(fpath_frequencies):
-        abort("Could not find frequencies.txt")
-    if not fpath_grams or not os.path.isfile(fpath_grams):
-        print("Could not find 3grams.txt, loading without 3grams.")
+    # check existence of 1grams
+    if not os.path.isfile("1grams.txt"):
+        print("Error: could not find 1grams.txt.")
+        print("Exiting....")
+        sys.exit(1)
 
-    # initialise segmenter
-    print("Loading Segmenter.")
+    # check existence of 2grams and 3grams
+    if (ngrams2 and ngrams3) and (not os.path.isfile(ngrams3) or not os.path.isfile(ngrams2)):
+        print("Could not find some files.")
+        print("Segmenter will run without use of 2grams and 3grams.")
+        ngrams2 = None
+        ngrams3 = None
+
+    # make segmenter
     global __seg
-    __seg = Segmenter(fpath_frequencies, fpath_grams)
+    __seg = Segmenter(ngrams1, fpath_2grams=ngrams2, fpath_3grams=ngrams3)
 
     # show intro msg
     clear()

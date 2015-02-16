@@ -6,14 +6,14 @@
 
 import os
 import sys
-import loader as _loader
-
+import loader
 
 # --------------------------------------------------------------------------------
 # Globals.
 # --------------------------------------------------------------------------------
 
-
+IGNORE = ["the", "and"]
+MINSIZE = 3
 
 # --------------------------------------------------------------------------------
 # Clases.
@@ -21,61 +21,45 @@ import loader as _loader
 
 class Segmenter(object):
 
-    __frequencies = None
+    # instance variables
+    __1grams = None
+    __2grams = None
     __3grams = None
-    __MIN_DEGREE = _loader.MIN_DEGREE
 
-    def __init__(self, fpath_frequencies, fpath_3grams=None):
-        self.__frequencies = _loader.load_frequencies(fpath_frequencies)
-        if fpath_3grams:
-            self.__3grams = _loader.load_3grams(fpath_3grams)
-        else:
-            self.__3grams = dict(dict(dict()))
+    def __init__(self, fpath_1grams, fpath_2grams=None, fpath_3grams=None):
+        self.__1grams = loader.load_ngrams(fpath_1grams, 1, min_ngram_size=MINSIZE, ignore=IGNORE)
+        if fpath_2grams and fpath_3grams:
+            self.__2grams = loader.load_ngrams(fpath_2grams, 2, min_ngram_size=MINSIZE, ignore=IGNORE)
+            self.__3grams = loader.load_ngrams(fpath_3grams, 3, min_ngram_size=MINSIZE, ignore=IGNORE)
 
-    def prob(self, words):
+    def prob(self, *words):
         """
         Get the probability of the specified n-grams.
         Raises ValueError if you pass in an illegal number of n-grams.
         :rtype : float
         """
-        if isinstance(words, str):
-            words = [words]
         if len(words) == 1:
             word = words[0]
-            p = self._pr(word)
-            return p
+            if word in self.__1grams:
+                return self.__1grams[word]
+            else: return 0.0
+
+        elif len(words) == 2:
+            word1 = words[0]
+            word2 = words[1]
+            if word1 in self.__2grams and word2 in self.__2grams[word1]:
+                return self.__2grams[word1][word2]
+            else: return 0.0
+
         elif len(words) == 3:
             word1 = words[0]
             word2 = words[1]
             word3 = words[2]
-            _3grams = self.__3grams
-            if word1 in _3grams:
-                if word2 in _3grams[word1]:
-                    if word3 in _3grams[word1][word2]:
-                        return _3grams[word1][word2][word3]
-            return 0.0
-        else:
-            raise ValueError("Can only get probability of 1-grams or 3-grams.")
+            if word1 in self.__3grams and word2 in self.__3grams[word1] and word3 in self.__3grams[word2]:
+                return self.__3grams[word1][word2][word3]
 
-    def _pr(self, s):
-        if s not in self.__frequencies:
-            return 0.0
         else:
-            return self.__frequencies[s]
-
-    def _pr3gram(self, s1, s2, s3):
-        """
-        Get the probability that three strings appear one after another.
-        :rtype : float
-        """
-        if not s1 in self.__3grams:
-            return 0.0
-        elif not s2 in self.__3grams[s1]:
-            return 0.0
-        elif not s3 in self.__3grams[s1][s2]:
-            return 0.0
-        else:
-            return self.__3grams[s1][s2][s3]
+            raise ValueError("Invalid number of arguments passed.")
 
     def segment(self, string):
         """
@@ -83,13 +67,16 @@ class Segmenter(object):
         Return the string with its components delimited by '-'
         :rtype : str
         """
-        return self._slice(string, self.__frequencies, len(string)-1)
+        segmentation = self.__slice(string, len(string)-1)
+        if self.__2grams and self.__3grams:
+            return self.__combine(segmentation)
+        else:
+            return segmentation
 
-    def _slice(self, string, words, degree):
+    def __slice(self, string, degree):
 
-        # base case.
-        if degree < self.__MIN_DEGREE:
-         return string
+        # base case
+        if degree < MINSIZE: return string
 
         # keep track of the most probable substring in this word. the first character
         # of this string will be at string[pivot].
@@ -98,56 +85,92 @@ class Segmenter(object):
         pivot = -1
 
         # find all strings of length degree in this string and check their likelihood
-        # record the most probable string in the word, which will start at pivot.
+        # record the most probable string in the word, which will start at the value of pivot.
         for i in range(0, len(string)-degree+1):
             substr = string[i:i+degree]
-            if substr in words:
+            if substr in self.__1grams:
                 pr_substr = self.prob(substr)
                 if (pivot == -1 and pr_substr > pr_string) or (pivot > -1 and pr_substr > pr_pivot):
                     pr_pivot = pr_substr
                     pivot = i
 
-        # if no pivot, then repeat with a lesser degree.
-        if pivot == -1:
-            return self._slice(string, words, degree-1)
+        # if no pivot was found, repeat with a lesser degree
+        if pivot == -1: return self.__slice(string, degree-1)
 
         # if there's a pivot, split string into three and repeat on each string
-        # join the strings with "-" to show segmentation.
+        # concatenate each recursive answer with "-" to delimit segments
         else:
             left = string[:pivot]
             mid = string[pivot:pivot+degree]
             right = string[pivot+degree:]
-            lseg = self._slice(left, words, len(left)-1)
-            mseg = self._slice(mid, words, len(mid)-1)
-            rseg = self._slice(right, words, len(right)-1)
-
+            lseg = self.__slice(left, len(left)-1)
+            mseg = self.__slice(mid, len(mid)-1)
+            rseg = self.__slice(right, len(right)-1)
             return "-".join([lseg,mseg,rseg]).lstrip("-").rstrip("-")
+
+    def __combine(self, segmentation):
+
+        segments = segmentation.split("-")
+        length = len(segments)
+        if length < 2: return segmentation
+
+        # keep merging segments of length 1
+        while True:
+
+            # keep track of best merge
+            indxToMerge = -1
+            bestMergeProb = 0.0
+
+            for i in range(length-1):
+
+                seg1 = segments[i]
+                seg2 = segments[i+1]
+                if len(seg1) > MINSIZE and len(seg2) > MINSIZE: continue
+                merger = seg1 + seg2
+                if merger not in self.__1grams: continue
+                prob = self.prob(merger)
+                if prob > bestMergeProb:
+                    indxToMerge = i
+                    bestMergeProb = prob
+
+            if indxToMerge == -1:
+                return segmentation
+            else:
+                merger = segments[indxToMerge] + segments[indxToMerge+1]
+                segments = segments[:indxToMerge] + [merger] + segments[indxToMerge+2:]
+                return "-".join(segments)
 
 # --------------------------------------------------------------------------------
 # Main.
 # --------------------------------------------------------------------------------
+
 def main():
 
+    # check arguments have been supplied
     if len(sys.argv) == 1:
         print("Error: no arguments supplied.")
         print("Usage: segmenter.py arg1 arg2 ... ")
         print("Where arg1, arg2, ... are the strings you want to segment.")
         sys.exit(0)
 
+    # check existence of 1grams
     if not os.path.isfile("1grams.txt"):
         print("Error: could not find 1grams.txt.")
         print("Exiting....")
         sys.exit(1)
     ngrams1 = "1grams.txt"
 
+    # check existence of 2grams and 3grams
+    ngrams2 = "2grams.txt"
     ngrams3 = "3grams.txt"
-    if not os.path.isfile(ngrams3):
-        print("Could not find 3grams.txt.")
-        print("Segmenter will run without use of 3grams.")
+    if not os.path.isfile(ngrams3) or not os.path.isfile(ngrams2):
+        print("Could not find some files.")
+        print("Segmenter will run without use of 2grams and 3grams.")
+        ngrams2 = None
         ngrams3 = None
 
-    seg = Segmenter(ngrams1, ngrams3)
-
+    # make segmenter, display output
+    seg = Segmenter(ngrams1, fpath_2grams=ngrams2, fpath_3grams=ngrams3)
     for word in sys.argv[1:]:
         print(word + "     ---->     ", end="")
         segmentation = seg.segment(word)
