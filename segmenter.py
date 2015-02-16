@@ -24,13 +24,11 @@ class Segmenter(object):
     # instance variables
     __1grams = None
     __2grams = None
-    __3grams = None
 
-    def __init__(self, fpath_1grams, fpath_2grams=None, fpath_3grams=None):
+    def __init__(self, fpath_1grams, fpath_2grams=None):
         self.__1grams = loader.load_ngrams(fpath_1grams, 1, min_ngram_size=MINSIZE, ignore=IGNORE)
-        if fpath_2grams and fpath_3grams:
+        if fpath_2grams:
             self.__2grams = loader.load_ngrams(fpath_2grams, 2, min_ngram_size=MINSIZE, ignore=IGNORE)
-            self.__3grams = loader.load_ngrams(fpath_3grams, 3, min_ngram_size=MINSIZE, ignore=IGNORE)
 
     def prob(self, *words):
         """
@@ -51,13 +49,6 @@ class Segmenter(object):
                 return self.__2grams[word1][word2]
             else: return 0.0
 
-        elif len(words) == 3:
-            word1 = words[0]
-            word2 = words[1]
-            word3 = words[2]
-            if word1 in self.__3grams and word2 in self.__3grams[word1] and word3 in self.__3grams[word2]:
-                return self.__3grams[word1][word2][word3]
-
         else:
             raise ValueError("Invalid number of arguments passed.")
 
@@ -68,7 +59,7 @@ class Segmenter(object):
         :rtype : str
         """
         segmentation = self.__slice(string, len(string)-1)
-        if self.__2grams and self.__3grams:
+        if self.__2grams:
             return self.__combine(segmentation)
         else:
             return segmentation
@@ -160,17 +151,15 @@ def main():
         sys.exit(1)
     ngrams1 = "1grams.txt"
 
-    # check existence of 2grams and 3grams
+    # check existence of 2grams
     ngrams2 = "2grams.txt"
-    ngrams3 = "3grams.txt"
-    if not os.path.isfile(ngrams3) or not os.path.isfile(ngrams2):
-        print("Could not find some files.")
-        print("Segmenter will run without use of 2grams and 3grams.")
+    if not os.path.isfile(ngrams2):
+        print("Could not find 2grams file")
+        print("Segmenter will run without use of 2grams")
         ngrams2 = None
-        ngrams3 = None
 
     # make segmenter, display output
-    seg = Segmenter(ngrams1, fpath_2grams=ngrams2, fpath_3grams=ngrams3)
+    seg = Segmenter(ngrams1, fpath_2grams=ngrams2)
     for word in sys.argv[1:]:
         print(word + "     ---->     ", end="")
         segmentation = seg.segment(word)

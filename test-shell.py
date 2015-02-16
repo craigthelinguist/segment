@@ -90,14 +90,12 @@ def main():
     # default fpaths
     ngrams1 = "1grams.txt"
     ngrams2 = "2grams.txt"
-    ngrams3 = "3grams.txt"
 
     # parse arguments
     args = sys.argv[1:]
     for arg in args:
         if arg == "-simple":
             ngrams2 = None
-            ngrams3 = None
 
     # check existence of 1grams
     if not os.path.isfile("1grams.txt"):
@@ -106,15 +104,14 @@ def main():
         sys.exit(1)
 
     # check existence of 2grams and 3grams
-    if (ngrams2 and ngrams3) and (not os.path.isfile(ngrams3) or not os.path.isfile(ngrams2)):
+    if ngrams2 and not os.path.isfile(ngrams2):
         print("Could not find some files.")
         print("Segmenter will run without use of 2grams and 3grams.")
         ngrams2 = None
-        ngrams3 = None
 
     # make segmenter
     global __seg
-    __seg = Segmenter(ngrams1, fpath_2grams=ngrams2, fpath_3grams=ngrams3)
+    __seg = Segmenter(ngrams1, fpath_2grams=ngrams2)
 
     # show intro msg
     clear()
