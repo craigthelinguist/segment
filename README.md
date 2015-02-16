@@ -31,7 +31,7 @@ How it works
 The segment(string) method works in two stages: slice and combine.
 
 <h5>slice(string)</h5>
-Look at substrings in <code>string</code> and segment according to the most likely. Repeat the process on each segment, looking at smaller and smaller substrings, until you below a predefined minimum substring length (currently this is 3).
+Look at substrings in <code>string</code> and segment according to the most likely. Repeat the process on each segment, looking at smaller and smaller substrings, until you recurse below a predefined minimum substring length (currently this is 3).
 
 <h5>combine(segmentation)</h5>
 Look at the segment in <code>segmentation</code>. If a segment is below the minimum substring length, look at its neighbouring segments. If they can be combined to form a string in the ngrams we loaded, then we combine it. Repeat until we can no longer combine anything.
