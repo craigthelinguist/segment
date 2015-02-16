@@ -1,5 +1,3 @@
-
-
 # --------------------------------------------------------------------------------
 # Imports.
 # --------------------------------------------------------------------------------
@@ -7,6 +5,8 @@
 import os
 import sys
 import loader
+import codecs
+
 
 # --------------------------------------------------------------------------------
 # Globals.
@@ -14,9 +14,11 @@ import loader
 
 IGNORE = ["the", "and"]
 MINSIZE = 3
+ENCODING = "latin-1"
+
 
 # --------------------------------------------------------------------------------
-# Clases.
+# Segmenter class.
 # --------------------------------------------------------------------------------
 
 class Segmenter(object):
@@ -26,6 +28,7 @@ class Segmenter(object):
     __2grams = None
 
     def __init__(self, fpath_1grams, fpath_2grams=None):
+        loader = Loader()
         self.__1grams = loader.load_ngrams(fpath_1grams, 1, min_ngram_size=MINSIZE, ignore=IGNORE)
         if fpath_2grams:
             self.__2grams = loader.load_ngrams(fpath_2grams, 2, min_ngram_size=MINSIZE, ignore=IGNORE)
@@ -130,6 +133,69 @@ class Segmenter(object):
                 merger = segments[indxToMerge] + segments[indxToMerge+1]
                 segments = segments[:indxToMerge] + [merger] + segments[indxToMerge+2:]
                 return "-".join(segments)
+
+
+
+
+
+# --------------------------------------------------------------------------------
+# IO.
+# --------------------------------------------------------------------------------
+
+
+
+# --------------------------------------------------------------------------------
+# Functions.
+# --------------------------------------------------------------------------------
+
+class Loader(object):
+
+    def load_ngrams(self, fname, degree, min_ngram_size=None, ignore=[]):
+        words = dict()
+        count = 0
+        with codecs.open(fname, "r", ENCODING) as f:
+
+            for line in f:
+
+                # ngram
+                line = line.split("\t")
+                ngram = line[0]
+                freq = int(line[1])
+
+                # split ngram into its tokens
+                # check validity
+                ngrams = ngram.split(" ")
+                if len(ngrams) != degree: continue
+                if min_ngram_size:
+                    for n in ngrams:
+                        if len(n) < min_ngram_size: continue
+                        if n in ignore: continue
+
+                # add to words
+                curr_dict = words
+                for ngram in ngrams[:-1]:
+                    if ngram not in curr_dict:
+                        curr_dict[ngram] = dict()
+                    curr_dict = curr_dict[ngram]
+
+                # add to the curr_dict
+                ngram = ngrams[-1]
+                if ngram in curr_dict: curr_dict[ngram] = curr_dict[ngram] + freq
+                else: curr_dict[ngram] = freq
+                count += freq
+
+            # normalise everything
+            self.recursive_norm(words, count)
+
+        return words
+
+    def recursive_norm(self, words, count):
+        for key in words:
+            if isinstance(words[key], int):
+                words[key] = words[key] / count
+            else:
+                self.recursive_norm(words[key], count)
+
 
 # --------------------------------------------------------------------------------
 # Main.
