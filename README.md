@@ -1,5 +1,3 @@
-# segment
-
 segmenter.py
 ============
 
