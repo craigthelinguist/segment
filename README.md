@@ -6,11 +6,30 @@ The Segmenter class takes two arguments specifying the file location of 1grams a
 Here's an example
 ```python
 from segmenter import Segmenter
-seg = Segmenter("1grams.txt", fpath_2grams="2grams.txt")
+seg = Segmenter("1grams.tsv", fpath_2grams="2grams.tsv")
 segmentation = seg.segment("allblacks")
 print(segmentation)
 > "all-blacks"
 ```
+
+Segmenting is achieved based on the ngram frequencies you supply. These should be specified in .tsv files where the first column is the ngram and the second column is a frequency count. For example, the following text: "and the example file and the example people" would have a 1grams.tsv file of:
+```
+and 2
+the 2
+example 2
+file  1
+people  1
+```
+
+And this would be its 2grams.tsv:
+```
+and the 2
+the example 2
+example file  1
+file and  1
+example people  1
+```
+
 
 test-shell.py
 =============
