@@ -12,7 +12,7 @@ print(segmentation)
 > "all-blacks"
 ```
 
-Segmenting is achieved based on the ngram frequencies you supply. These should be specified in .tsv files where the first column is the ngram and the second column is a frequency count. For example, the following text: "and the example file and the example people" would have a 1grams.tsv file of:
+Segmenting is achieved based on the ngram frequencies you supply. These should be specified in tab-separated files where the first column is the ngram and the second column is a frequency count. For example, the following text: "and the example file and the example people" would have the following 1grams.tsv file:
 ```
 and 2
 the 2
@@ -21,7 +21,7 @@ file  1
 people  1
 ```
 
-And this would be its 2grams.tsv:
+Its 2grams.tsv would be:
 ```
 and the 2
 the example 2
@@ -43,6 +43,7 @@ If you want to test Segmenter using 1grams only, run it like this:
 ```bash
 python3 shell.py -simple
 ```
+
 
 How it works
 ============
